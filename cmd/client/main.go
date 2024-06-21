@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/lipgloss"
-	// tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Text area size settings
@@ -110,6 +110,22 @@ func newModel() model {
 	// m.inputs[m.focus].Focus()
 	// m.updateKeybindings()
 	return m
+}
+
+//(m model) is the receiver of the method. It means that the 'Init'
+//method is accosiated with a type 'model'
+//I'm attaching this func to a struct, kinda like a method in a class?
+//When I call init on a model struct, make the textarea blink (this is a tea cmd)
+func (m model) Init() tea.Cmd {
+	return textarea.Blink
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+
+	}
 }
 
 func main() {
