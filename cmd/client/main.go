@@ -4,17 +4,21 @@ import (
 	// "fmt"
 	// "os"
 
+	"fmt"
+	"os"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/lipgloss"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Text area size settings
 const (
 	//Starting number of text areas
 	initialInputs = 2
+	helpHeight    = 5
 
 	uriMinHeight      = 1
 	uriMinWidth       = 1
@@ -62,6 +66,7 @@ type model struct {
 	keymap keymap
 	help   help.Model
 	inputs []textarea.Model
+	focus  int
 }
 
 func newTextarea() textarea.Model {
@@ -84,7 +89,7 @@ func newTextarea() textarea.Model {
 	return t
 }
 
-//Model sounds like a container at this time?
+// Model sounds like a container at this time?
 func newModel() model {
 	m := model{
 		inputs: make([]textarea.Model, initialInputs),
@@ -112,10 +117,10 @@ func newModel() model {
 	return m
 }
 
-//(m model) is the receiver of the method. It means that the 'Init'
-//method is accosiated with a type 'model'
-//I'm attaching this func to a struct, kinda like a method in a class?
-//When I call init on a model struct, make the textarea blink (this is a tea cmd)
+// (m model) is the receiver of the method. It means that the 'Init'
+// method is accosiated with a type 'model'
+// I'm attaching this func to a struct, kinda like a method in a class?
+// When I call init on a model struct, make the textarea blink (this is a tea cmd)
 func (m model) Init() tea.Cmd {
 	return textarea.Blink
 }
@@ -124,10 +129,89 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		// If the key is the Quit key, return the model and tea.Quit
+		case key.Matches(msg, m.keymap.quit):
+			for i := range m.inputs {
+				m.inputs[i].Blur()
+			}
+			return m, tea.Quit
 
+		// Next keymap
+		case key.Matches(msg, m.keymap.next):
+			// Prior to moving to the next text area, blur the current one
+			m.inputs[m.focus].Blur()
+
+			// Move focus to the next text area
+			m.focus++
+
+			// If we've reached the end of the available areas, go back to first text area
+			if m.focus > len(m.inputs)-1 {
+				m.focus = 0
+			}
+			cmd := m.inputs[m.focus].Focus()
+			cmds = append(cmds, cmd)
+
+		// Prev keymap
+		case key.Matches(msg, m.keymap.prev):
+			m.inputs[m.focus].Blur()
+			m.focus--
+			if m.focus < 0 {
+				m.focus = len(m.inputs) - 1
+			}
+			cmd := m.inputs[m.focus].Focus()
+			cmds = append(cmds, cmd)
+		}
+	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		m.width = msg.Width
+	}
+
+	for i := range m.inputs {
+		newModel, cmd := m.inputs[i].Update(msg)
+		m.inputs[i] = newModel
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Batch(cmds...)
+}
+
+// This is used to change the size of all the text areas as they're created
+// Maybe it will be useful for something else
+func (m *model) sizeInputs() {
+	for i := range m.inputs {
+		m.inputs[i].SetWidth(m.width / len(m.inputs))
+		m.inputs[i].SetHeight(m.height - helpHeight)
 	}
 }
 
-func main() {
+// Attaches View method to the model struct?
+// What is View actually doing?
+func (m model) View() string {
 
+	// Setting up a help object that contains all help messages for my keybindings
+	help := m.help.ShortHelpView([]key.Binding{
+		m.keymap.next,
+		m.keymap.prev,
+		m.keymap.quit,
+	})
+
+	// Setup a string slice that contains all views? Why would a string slice contain the views?
+	var views []string
+	for i := range m.inputs {
+		// append each of the inputs on the model to the views slice
+		// inputs.View() renders the text area
+		// View() Returns a string, so all UI elements must just be strings?
+		views = append(views, m.inputs[i].View())
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help
+}
+
+func main() {
+	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+		fmt.Println("Error while running program:", err)
+		os.Exit(0)
+	}
 }

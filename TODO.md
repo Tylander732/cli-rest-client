@@ -1,3 +1,7 @@
-- [ ] Fill this in later when I start getting a clear picture
+# Todo
+Missing Cursor
+Text areas are very small
+No styling
 
-- [ ] Two text areas, one for body of request, one for response
+# Done
+- Two text areas
