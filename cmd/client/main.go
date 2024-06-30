@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tylander732/cli-rest-client/pkg/http"
 )
 
 // Text area size settings
@@ -29,32 +30,18 @@ const (
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
-
-	cursorLineStyle = lipgloss.NewStyle().
-			Background(lipgloss.Color("57")).
-			Foreground(lipgloss.Color("230"))
-
-	placeholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("238"))
-
-	endOfBufferStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("235"))
-
-	focusedPlaceholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("99"))
-
-	focusedBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("238"))
-
-	blurredBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.HiddenBorder())
+	cursorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	cursorLineStyle  = lipgloss.NewStyle().Background(lipgloss.Color("57")).Foreground(lipgloss.Color("230"))
+	placeholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
+	endOfBufferStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("235"))
+	focusedPlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
+	focusedBorderStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("238"))
+	blurredBorderStyle = lipgloss.NewStyle().Border(lipgloss.HiddenBorder())
 )
 
 type keymap = struct {
 	//Current available keybinding types
-	next, prev, quit key.Binding
+	next, prev, quit, send key.Binding
 }
 
 // Settings for the text areas?
@@ -104,6 +91,11 @@ func newModel() model {
 				key.WithKeys("esc", "ctrl+c"),
 				key.WithHelp("esc", "quit"),
 			),
+			//TODO: Set this as enter instead, but for some reason ctrl+enter doesn't work
+			send: key.NewBinding(
+				key.WithKeys("ctrl+s"),
+				key.WithHelp("ctrl+s", "send"),
+			),
 		},
 	}
 	for i := 0; i < initialInputs; i++ {
@@ -126,11 +118,6 @@ func (m model) Init() tea.Cmd {
 // UI updates
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-
-	//TODO: write what's in the focused area to a log file
-	// log.Println(m.inputs[m.focus].Value())
-
-	log.Println("tick")
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -166,6 +153,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmd := m.inputs[m.focus].Focus()
 			cmds = append(cmds, cmd)
+
+		case key.Matches(msg, m.keymap.send):
+			log.Println(m.inputs[m.focus].Value())
+			//Take input from the text area and send it to a curl location
+			http.SendRequest()
 		}
 	// This will always happen once initially, it then happens whenever the user resizes the terminal window
 	case tea.WindowSizeMsg:
@@ -202,6 +194,7 @@ func (m model) View() string {
 		m.keymap.next,
 		m.keymap.prev,
 		m.keymap.quit,
+		m.keymap.send,
 	})
 
 	// Setup a string slice that contains all views? Why would a string slice contain the views?
