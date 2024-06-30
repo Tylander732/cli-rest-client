@@ -1,11 +1,9 @@
 package main
 
 import (
-	// "fmt"
-	// "os"
-
 	"fmt"
 	"os"
+	"log"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -89,7 +87,6 @@ func newTextarea() textarea.Model {
 	return t
 }
 
-// Model sounds like a container at this time?
 func newModel() model {
 	m := model{
 		inputs: make([]textarea.Model, initialInputs),
@@ -112,8 +109,7 @@ func newModel() model {
 	for i := 0; i < initialInputs; i++ {
 		m.inputs[i] = newTextarea()
 	}
-	// m.inputs[m.focus].Focus()
-	// m.updateKeybindings()
+	m.inputs[m.focus].Focus()
 	return m
 }
 
@@ -125,8 +121,16 @@ func (m model) Init() tea.Cmd {
 	return textarea.Blink
 }
 
+// Msg is input from the user
+// Update handles reading input from the user as well as performing
+// UI updates
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
+
+	//TODO: write what's in the focused area to a log file
+	// log.Println(m.inputs[m.focus].Value())
+
+	log.Println("tick")
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -163,12 +167,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.inputs[m.focus].Focus()
 			cmds = append(cmds, cmd)
 		}
+	// This will always happen once initially, it then happens whenever the user resizes the terminal window
 	case tea.WindowSizeMsg:
+		//TODO: possible initial height and width bug here
 		m.height = msg.Height
 		m.width = msg.Width
 	}
 
 	for i := range m.inputs {
+		// inputs.Update() is the bubletea update loop
 		newModel, cmd := m.inputs[i].Update(msg)
 		m.inputs[i] = newModel
 		cmds = append(cmds, cmd)
@@ -210,6 +217,15 @@ func (m model) View() string {
 }
 
 func main() {
+	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.SetOutput(file)
+
+	log.Println("Hello")
+
 	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(0)
