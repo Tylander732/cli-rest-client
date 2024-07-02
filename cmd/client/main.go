@@ -16,13 +16,10 @@ import (
 // Text area size settings
 const (
 	//Starting number of text areas
-	initialInputs = 2
-	helpHeight    = 5
-
-	uriMinHeight      = 1
-	uriMinWidth       = 1
-	treeMinHeight     = 1
-	treeMinWidth      = 1
+	initialInputs     = 2
+	helpHeight        = 5
+	urlHeight         = 1
+	treeWidth         = 1
 	dataMinHeight     = 1
 	dataMinWidth      = 1
 	responseMinHeight = 1
@@ -30,13 +27,13 @@ const (
 )
 
 var (
-	cursorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
-	cursorLineStyle  = lipgloss.NewStyle().Background(lipgloss.Color("57")).Foreground(lipgloss.Color("230"))
-	placeholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
-	endOfBufferStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("235"))
+	cursorStyle             = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	cursorLineStyle         = lipgloss.NewStyle().Background(lipgloss.Color("57")).Foreground(lipgloss.Color("230"))
+	placeholderStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
+	endOfBufferStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("235"))
 	focusedPlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
-	focusedBorderStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("238"))
-	blurredBorderStyle = lipgloss.NewStyle().Border(lipgloss.HiddenBorder())
+	focusedBorderStyle      = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("238"))
+	blurredBorderStyle      = lipgloss.NewStyle().Border(lipgloss.HiddenBorder())
 )
 
 type keymap = struct {
@@ -158,7 +155,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			log.Println(m.inputs[m.focus].Value())
 
 			//TODO: These values need to be updated
-			response, err := http.GetRequest("", "http://localhost:8080/items")
+			response, err := http.GetRequest("http://localhost:8080/items")
 			if err != nil {
 				log.Println(err)
 			}
@@ -172,6 +169,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 	}
 
+	//Size the model
+	m.sizeInputs()
+
 	for i := range m.inputs {
 		// inputs.Update() is the bubletea update loop
 		newModel, cmd := m.inputs[i].Update(msg)
@@ -183,11 +183,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // This is used to change the size of all the text areas as they're created
-// Maybe it will be useful for something else
 func (m *model) sizeInputs() {
 	for i := range m.inputs {
 		m.inputs[i].SetWidth(m.width / len(m.inputs))
-		m.inputs[i].SetHeight(m.height - helpHeight)
+		m.inputs[i].SetHeight(m.height - helpHeight - urlHeight)
 	}
 }
 
@@ -230,4 +229,3 @@ func main() {
 		os.Exit(0)
 	}
 }
-
