@@ -158,7 +158,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			log.Println(m.inputs[m.focus].Value())
 
 			//TODO: These values need to be updated
-			response := http.GetRequest("", "http://localhost:8080/items")
+			response, err := http.GetRequest("", "http://localhost:8080/items")
+			if err != nil {
+				log.Println(err)
+			}
 			m.inputs[1].SetValue(response)
 		}
 
@@ -227,3 +230,4 @@ func main() {
 		os.Exit(0)
 	}
 }
+
