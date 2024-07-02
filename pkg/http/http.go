@@ -1,9 +1,36 @@
 package http
 
-import "log"
+import (
+	"io"
+	"log"
+	"net/http"
+)
 
-//TODO: Write a curl request
+func GetRequest(requestBody string, url string) string {
+    client := &http.Client{}
 
-func SendRequest(requestBody string) {
-    log.Println(requestBody)
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        log.Println("Error creating request:", err)
+        return ""
+    }
+
+
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Println("Error sending request:", err)
+        return ""
+    }
+
+    defer resp.Body.Close()
+
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        log.Println("Error reading response:", err)
+        return ""
+    }
+
+    log.Println("Response from ", url, ":", string(body))
+
+    return string(body)
 }

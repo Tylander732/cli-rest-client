@@ -6,8 +6,7 @@
 - URL
 
 ## Backend elements
-Wrapping around CURL as our utility.
-Maybe an opportunity to dive more into HTTP?
+- HTTP services for handling GET, POST, DELETE, UPDATE requests
 
 # Done
 - Two text areas

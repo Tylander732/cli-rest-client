@@ -156,9 +156,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keymap.send):
 			log.Println(m.inputs[m.focus].Value())
-			//Take input from the text area and send it to a curl location
-			http.SendRequest()
+
+			//TODO: These values need to be updated
+			response := http.GetRequest("", "http://localhost:8080/items")
+			m.inputs[1].SetValue(response)
 		}
+
 	// This will always happen once initially, it then happens whenever the user resizes the terminal window
 	case tea.WindowSizeMsg:
 		//TODO: possible initial height and width bug here
